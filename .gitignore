@@ -25,3 +25,6 @@ test_*.py
 # Python cache
 __pycache__/
 *.py[cod]
+# Temporary OCR files
+temp/*
+!temp/.gitkeep

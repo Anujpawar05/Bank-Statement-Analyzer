@@ -40,7 +40,7 @@ class DocumentExtractor:
         text = self.text_extractor.extract(document)
 
         if text.strip():
-            return text
+           return text
 
-        # OCR fallback will be added in Sprint 5
+    # OCR integration will be added in Sprint 5.3
         return ""
