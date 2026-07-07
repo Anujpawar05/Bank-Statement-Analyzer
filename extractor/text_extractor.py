@@ -3,26 +3,29 @@ import fitz
 
 class TextExtractor:
     """
-    Extracts embedded text from a PDF document.
+    Extract embedded text from a PDF document.
     """
 
     def extract(self, document: fitz.Document) -> str:
         """
-        Extract all text from every page in the PDF.
+        Extract text from all pages.
 
-        Args:
-            document: An opened PyMuPDF document.
+        Parameters
+        ----------
+        document : fitz.Document
 
-        Returns:
-            A single string containing all extracted text.
+        Returns
+        -------
+        str
         """
 
-        extracted_text = []
+        pages = []
 
-        for page in document:
-            page_text = page.get_text()
+        for page_number, page in enumerate(document, start=1):
 
-            if page_text:
-                extracted_text.append(page_text)
+            text = page.get_text("text")
 
-        return "\n".join(extracted_text)
+            if text.strip():
+                pages.append(text)
+
+        return "\n".join(pages)
