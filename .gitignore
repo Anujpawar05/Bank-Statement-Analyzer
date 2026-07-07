@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual Environment
+venv/
+
+# Generated files
+uploads/*
+outputs/*
+logs/*
+
+# Keep the folders, ignore their contents
+!uploads/.gitkeep
+!outputs/.gitkeep
+!logs/.gitkeep
