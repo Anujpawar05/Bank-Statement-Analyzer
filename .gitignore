@@ -19,3 +19,9 @@ sample_data/*.pdf
 
 # Temporary test scripts
 test_*.py
+# Pytest
+.pytest_cache/
+
+# Python cache
+__pycache__/
+*.py[cod]
