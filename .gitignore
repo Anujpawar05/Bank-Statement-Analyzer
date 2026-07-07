@@ -14,3 +14,8 @@ logs/*
 !uploads/.gitkeep
 !outputs/.gitkeep
 !logs/.gitkeep
+# Sample PDFs
+sample_data/*.pdf
+
+# Temporary test scripts
+test_*.py
