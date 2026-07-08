@@ -28,3 +28,34 @@ __pycache__/
 # Temporary OCR files
 temp/*
 !temp/.gitkeep
+
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test cache
+.pytest_cache/
+
+# Build
+build/
+dist/
+
+# Generated outputs
+outputs/*
+!outputs/.gitkeep
+
+logs/*
+!logs/.gitkeep
+
+# Temporary OCR images
+temp/
