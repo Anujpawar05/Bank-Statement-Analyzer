@@ -54,3 +54,34 @@ class TransactionParser:
             "amount": amount,
             "balance": balance,
         }
+    
+    def parse_debit_line(self, line: str) -> dict:
+        """
+        Parse a debit transaction line.
+        """
+
+        parts = line.split()
+
+        return {
+            "date": parts[0],
+            "description": " ".join(parts[1:-2]),
+            "debit": float(parts[-2]),
+            "credit": None,
+            "balance": float(parts[-1]),
+        }
+
+
+    def parse_credit_line(self, line: str) -> dict:
+        """
+        Parse a credit transaction line.
+        """
+
+        parts = line.split()
+
+        return {
+            "date": parts[0],
+            "description": " ".join(parts[1:-2]),
+            "debit": None,
+            "credit": float(parts[-2]),
+            "balance": float(parts[-1]),
+        }
