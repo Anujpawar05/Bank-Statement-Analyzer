@@ -1,0 +1,15 @@
+STATE BANK OF INDIA
+
+Account Name : JOHN DOE
+
+Account Number : 12345678901
+
+Opening Balance : 15000.00
+
+01/04/26 ATM Withdrawal 1000.00 14000.00
+02/04/26 Salary 50000.00 64000.00
+03/04/26 UPI Payment 250.00 63750.00
+
+Closing Balance : 63750.00
+
+Page 1 of 5
