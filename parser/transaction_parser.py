@@ -85,3 +85,29 @@ class TransactionParser:
             "credit": float(parts[-2]),
             "balance": float(parts[-1]),
         }
+    def parse(self, line: str, transaction_type: str = "generic") -> dict:
+        """
+        Smart transaction parser.
+
+        Parameters
+        ----------
+        line : str
+        Transaction line.
+
+        transaction_type : str
+        generic, debit or credit
+
+        Returns
+        -------
+        dict
+        Parsed transaction.
+        """
+
+        if transaction_type.lower() == "debit":
+            return self.parse_debit_line(line)
+
+        if transaction_type.lower() == "credit":
+            return self.parse_credit_line(line)
+
+        return self.parse_line(line)   
+    
