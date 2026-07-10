@@ -1,6 +1,6 @@
 from extractor.pdf_loader import PDFLoader
 from extractor.document_extractor import DocumentExtractor
-
+from parser.repair_engine import RepairEngine
 from parser.bank_detector import BankDetector
 from parser.metadata_extractor import MetadataExtractor
 from parser.parser_factory import ParserFactory
