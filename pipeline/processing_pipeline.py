@@ -7,7 +7,7 @@ from parser.parser_factory import ParserFactory
 
 from analyzer.analysis_engine import AnalysisEngine
 from categorizer.transaction_categorizer import TransactionCategorizer
-
+from validator.transaction_validator import TransactionValidator
 
 class ProcessingPipeline:
     """
@@ -62,12 +62,27 @@ class ProcessingPipeline:
 
         if parser is not None:
             transactions = parser.parse(text)
-            print("\nFIRST 10 PARSED TRANSACTIONS")
+            transactions = [
+                TransactionValidator.validate(t)
+                for t in transactions
+            ]
+            print("\nVALIDATION REPORT")
             print("=" * 60)
 
-            for t in transactions[:10]:
-                print(t)
-            print(f"Transactions found: {len(transactions)}")
+            valid = 0
+            invalid = 0
+
+            for t in transactions:
+                if t["valid"]:
+                    valid += 1
+                else:
+                    invalid += 1
+                    print(f"{t['date']} -> {t['warnings']}")
+
+            print()
+            print(f"Valid Transactions   : {valid}")
+            print(f"Invalid Transactions : {invalid}")
+            print(f"Total Transactions   : {len(transactions)}")
 
         # -------------------------
         # Categorize transactions
