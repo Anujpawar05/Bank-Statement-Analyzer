@@ -3,25 +3,17 @@ from parser.bank_parsers.sbi_parser import SBIParser
 
 class ParserFactory:
     """
-    Factory responsible for returning
-    the correct parser for a bank.
+    Returns the appropriate parser for the detected bank.
     """
 
     def get_parser(self, bank_name: str):
-        """
-        Return the correct parser based
-        on the detected bank.
 
-        Parameters
-        ----------
-        bank_name : str
+        bank_name = bank_name.strip().upper()
 
-        Returns
-        -------
-        BaseParser | None
-        """
-
-        if bank_name == "STATE BANK OF INDIA":
+        if bank_name in (
+            "SBI",
+            "STATE BANK OF INDIA",
+        ):
             return SBIParser()
 
         return None

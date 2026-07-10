@@ -4,28 +4,31 @@ document_extractor.py
 Coordinates the document extraction pipeline.
 
 Workflow:
-1. Try extracting embedded text.
+1. Try embedded text extraction.
 2. If text exists, return it.
-3. Otherwise, OCR will be used (implemented in the next sprint).
+3. Otherwise convert PDF pages to images.
+4. Run OCR.
+5. Return OCR text.
 """
 
 from extractor.text_extractor import TextExtractor
+from extractor.image_converter import ImageConverter
+from extractor.ocr_extractor import OCRExtractor
 
 
 class DocumentExtractor:
     """
     Coordinates document text extraction.
-
-    This class acts as the single entry point for obtaining text
-    from a document.
     """
 
     def __init__(self):
         self.text_extractor = TextExtractor()
+        self.image_converter = ImageConverter()
+        self.ocr_extractor = OCRExtractor()
 
     def extract(self, document) -> str:
         """
-        Extract text from the document.
+        Extract text from a document.
 
         Parameters
         ----------
@@ -34,13 +37,21 @@ class DocumentExtractor:
         Returns
         -------
         str
-            Extracted text.
         """
 
+        # Step 1: Embedded text
         text = self.text_extractor.extract(document)
 
         if text.strip():
-           return text
+            print("✓ Embedded text detected.")
+            return text
 
-    # OCR integration will be added in Sprint 5.3
-        return ""
+        print("No embedded text found.")
+        print("Running OCR...")
+
+        # Step 2: OCR
+        images = self.image_converter.convert(document)
+
+        text = self.ocr_extractor.extract(images)
+
+        return text
