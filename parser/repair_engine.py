@@ -1,50 +1,85 @@
-from typing import List, Dict
-
-
 class RepairEngine:
     """
-    Attempts to detect transactions that are mathematically inconsistent.
-
-    This version DOES NOT modify transactions.
-    It only reports which transactions appear repairable.
+    Attempts safe mathematical reconciliation of parsed transactions.
+    Only repairs values when they can be inferred with certainty.
     """
 
-    def analyze(self, transactions: List[Dict]) -> List[Dict]:
-        issues = []
+    def analyze(self, transactions):
+        repairs = []
 
         if len(transactions) < 2:
-            return issues
+            return repairs
 
         previous_balance = transactions[0]["balance"]
 
-        for i in range(1, len(transactions)):
-            tx = transactions[i]
+        for index in range(1, len(transactions)):
 
-            debit = tx["debit"]
-            credit = tx["credit"]
-            balance = tx["balance"]
+            t = transactions[index]
 
-            expected_balance = previous_balance - debit + credit
+            debit = t.get("debit", 0.0)
+            credit = t.get("credit", 0.0)
+            balance = t.get("balance", 0.0)
 
-            difference = round(balance - expected_balance, 2)
+            expected = round(previous_balance - debit + credit, 2)
 
-            if abs(difference) > 0.01:
-                issues.append(
-                    {
-                        "index": i,
-                        "date": tx["date"],
-                        "description": tx["description"][:80],
-                        "expected_balance": expected_balance,
-                        "actual_balance": balance,
-                        "difference": difference,
-                        "repairable": (
-                            debit == 0
-                            or credit == 0
-                            or balance == 0
-                        )
-                    }
-                )
+            repaired = False
+            repair_type = None
 
-            previous_balance = balance
+            # --------------------------
+            # Missing balance
+            # --------------------------
+            if balance == 0:
+                t["balance"] = expected
+                balance = expected
 
-        return issues
+                repaired = True
+                repair_type = "balance"
+
+            # --------------------------
+            # Missing debit
+            # --------------------------
+            elif debit == 0 and credit == 0:
+
+                pass
+
+            # --------------------------
+            # Missing debit
+            # --------------------------
+            elif debit == 0 and balance < previous_balance:
+
+                inferred = round(previous_balance + credit - balance, 2)
+
+                if inferred > 0:
+                    t["debit"] = inferred
+
+                    repaired = True
+                    repair_type = "debit"
+
+            # --------------------------
+            # Missing credit
+            # --------------------------
+            elif credit == 0 and balance > previous_balance:
+
+                inferred = round(balance - previous_balance + debit, 2)
+
+                if inferred > 0:
+                    t["credit"] = inferred
+
+                    repaired = True
+                    repair_type = "credit"
+
+            difference = round(balance - expected, 2)
+
+            if repaired or abs(difference) > 0.01:
+
+                repairs.append({
+                    "index": index,
+                    "date": t["date"],
+                    "repair_type": repair_type,
+                    "difference": difference,
+                    "repaired": repaired
+                })
+
+            previous_balance = t["balance"]
+
+        return repairs
