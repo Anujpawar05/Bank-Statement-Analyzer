@@ -1,6 +1,6 @@
 from extractor.pdf_loader import PDFLoader
 from extractor.document_extractor import DocumentExtractor
-
+from analyzer.confidence_engine import ConfidenceEngine
 from parser.bank_detector import BankDetector
 from parser.metadata_extractor import MetadataExtractor
 from parser.parser_factory import ParserFactory
@@ -22,7 +22,7 @@ class ProcessingPipeline:
         self.bank_detector = BankDetector()
         self.metadata_extractor = MetadataExtractor()
         self.parser_factory = ParserFactory()
-
+        self.confidence_engine = ConfidenceEngine()
         self.analysis_engine = AnalysisEngine()
         self.audit_engine = AuditEngine()
 
@@ -134,6 +134,30 @@ class ProcessingPipeline:
 
             else:
                 print("No balance inconsistencies detected.")
+        
+
+        # ---------------------------------
+        # Confidence Engine
+        # ---------------------------------
+        confidence_report = self.confidence_engine.evaluate(
+            transactions,
+            audit_report
+        )
+
+        print("\nCONFIDENCE REPORT")
+        print("=" * 60)
+
+        print(
+            f"Average Confidence : "
+            f"{confidence_report['average_confidence']}%"
+       )
+
+        low = [
+            t for t in confidence_report["transactions"]
+            if t["confidence"] < 80
+        ]
+
+        print(f"Low Confidence Transactions : {len(low)}")
 
         # ---------------------------------
         # Categorize Transactions
@@ -155,4 +179,5 @@ class ProcessingPipeline:
             "transactions": transactions,
             "analysis": analysis,
             "audit_report": audit_report,
+            "confidence_report": confidence_report,
         }
