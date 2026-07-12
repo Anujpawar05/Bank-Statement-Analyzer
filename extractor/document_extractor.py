@@ -14,7 +14,8 @@ Workflow:
 from extractor.text_extractor import TextExtractor
 from extractor.image_converter import ImageConverter
 from extractor.ocr_extractor import OCRExtractor
-
+from utils.ocr_cleaner import OCRCleaner
+from utils.ocr_repair import repair_ocr_text
 
 class DocumentExtractor:
     """
@@ -25,7 +26,8 @@ class DocumentExtractor:
         self.text_extractor = TextExtractor()
         self.image_converter = ImageConverter()
         self.ocr_extractor = OCRExtractor()
-
+        self.ocr_cleaner = OCRCleaner()
+        self.ocr_repair = repair_ocr_text
     def extract(self, document) -> str:
         """
         Extract text from a document.
@@ -44,6 +46,9 @@ class DocumentExtractor:
 
         if text.strip():
             print("✓ Embedded text detected.")
+
+            text = self.ocr_cleaner.clean(text)
+
             return text
 
         print("No embedded text found.")
@@ -53,5 +58,9 @@ class DocumentExtractor:
         images = self.image_converter.convert(document)
 
         text = self.ocr_extractor.extract(images)
+                
+        text = self.ocr_cleaner.clean(text)
+
+        text = self.ocr_repair(text)
 
         return text

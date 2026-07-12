@@ -10,7 +10,7 @@ from analyzer.audit_engine import AuditEngine
 
 from categorizer.transaction_categorizer import TransactionCategorizer
 from validator.transaction_validator import TransactionValidator
-
+from parser.repair_engine import RepairEngine
 
 class ProcessingPipeline:
     """
@@ -25,7 +25,7 @@ class ProcessingPipeline:
         self.confidence_engine = ConfidenceEngine()
         self.analysis_engine = AnalysisEngine()
         self.audit_engine = AuditEngine()
-
+        self.repair_engine = RepairEngine()
         self.categorizer = TransactionCategorizer()
 
     def process(self, pdf_path):
@@ -107,6 +107,37 @@ class ProcessingPipeline:
             print(f"Valid Transactions   : {valid}")
             print(f"Invalid Transactions : {invalid}")
             print(f"Total Transactions   : {len(transactions)}")
+
+            # ---------------------------------
+            # Repair Transactions
+            #---------------------------------
+
+            repair_report = self.repair_engine.analyze(transactions)
+
+            print("\nREPAIR REPORT")
+            print("=" * 60)
+
+            if not repair_report:
+                print("No repairs required.")
+            else:
+
+                repaired = 0
+
+                for item in repair_report:
+
+                    if item["repaired"]:
+                        repaired += 1
+
+                    print(
+                        f"[{item['index']}] "
+                        f"{item['date']} | "
+                        f"{item['repair_type']} | "
+                        f"Difference={item['difference']:.2f}"
+                   )
+
+                print()
+                print(f"Automatic Repairs : {repaired}")
+                print(f"Items Reviewed    : {len(repair_report)}")
 
             # ---------------------------------
             # Audit Transactions
