@@ -116,32 +116,45 @@ class SBIParser(BaseParser):
 
     def _extract_transaction_blocks(self, lines):
         """
-        Split the statement into transaction blocks.
+        Split OCR text into transaction blocks.
 
-        Every transaction starts with a date.
+        Each transaction starts with a date.
+        Consecutive duplicate dates belong to the same transaction.
         """
 
         blocks = []
 
         current = []
-
         started = False
 
         for line in lines:
 
-            # Ignore statement headers before first transaction
+        # Ignore everything before first transaction
             if not started:
-
                 if self._is_date(line):
                     started = True
                 else:
                     continue
 
-            # New transaction begins
+        # -------------------------
+        # New transaction detected
+        # -------------------------
             if self._is_date(line):
 
+            # Consecutive duplicate date
+                if (
+                    current
+                    and len(current) == 1
+                    and self._is_date(current[0])
+                ):
+                    continue
+
+            # Save previous transaction
                 if current:
-                    blocks.append(current)
+
+                # Ignore blocks containing only a date
+                    if len(current) > 1:
+                        blocks.append(current)
 
                 current = [line]
 
@@ -149,7 +162,8 @@ class SBIParser(BaseParser):
 
                 current.append(line)
 
-        if current:
+        # Save final block
+        if current and len(current) > 1:
             blocks.append(current)
 
         return blocks
