@@ -1,3 +1,4 @@
+import traceback
 from pathlib import Path
 from parser.repair_engine import RepairEngine
 from pipeline.processing_pipeline import ProcessingPipeline
@@ -45,8 +46,8 @@ def main():
 
         print(f"\n💳 Transactions Parsed: {len(result['transactions'])}")
 
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
+    except Exception:
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
