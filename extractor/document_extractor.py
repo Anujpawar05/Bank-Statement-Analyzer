@@ -1,21 +1,10 @@
-"""
-document_extractor.py
-
-Coordinates the document extraction pipeline.
-
-Workflow:
-1. Try embedded text extraction.
-2. If text exists, return it.
-3. Otherwise convert PDF pages to images.
-4. Run OCR.
-5. Return OCR text.
-"""
-
 from extractor.text_extractor import TextExtractor
 from extractor.image_converter import ImageConverter
 from extractor.ocr_extractor import OCRExtractor
 from utils.ocr_cleaner import OCRCleaner
 from utils.ocr_repair import repair_ocr_text
+from preprocessor.ocr_normalizer import OCRNormalizer
+
 
 class DocumentExtractor:
     """
@@ -28,17 +17,11 @@ class DocumentExtractor:
         self.ocr_extractor = OCRExtractor()
         self.ocr_cleaner = OCRCleaner()
         self.ocr_repair = repair_ocr_text
+        self.normalizer = OCRNormalizer()      # <-- change this
+
     def extract(self, document) -> str:
         """
         Extract text from a document.
-
-        Parameters
-        ----------
-        document : fitz.Document
-
-        Returns
-        -------
-        str
         """
 
         # Step 1: Embedded text
@@ -49,6 +32,9 @@ class DocumentExtractor:
 
             text = self.ocr_cleaner.clean(text)
 
+            # Optional: normalize embedded text too
+            text = self.normalizer.normalize(text)
+
             return text
 
         print("No embedded text found.")
@@ -58,9 +44,11 @@ class DocumentExtractor:
         images = self.image_converter.convert(document)
 
         text = self.ocr_extractor.extract(images)
-                
+
         text = self.ocr_cleaner.clean(text)
 
         text = self.ocr_repair(text)
+
+        text = self.normalizer.normalize(text)   # <-- use self.normalizer
 
         return text

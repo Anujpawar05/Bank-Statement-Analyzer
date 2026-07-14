@@ -17,10 +17,19 @@ class MetadataExtractor:
         }
 
     def _extract_bank_name(self, text: str):
-        if "State Bank of India" in text:
-            return "State Bank of India"
+        text_upper = text.upper()
 
-        first_line = text.splitlines()[0].strip()
+        if "STATE BANK OF INDIA" in text_upper:
+            return "STATE BANK OF INDIA"
+
+        first_line = ""
+
+        for line in text.splitlines():
+            line = line.strip()
+
+            if line:
+                first_line = line
+                break
 
         return first_line
 
