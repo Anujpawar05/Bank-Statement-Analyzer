@@ -1,4 +1,6 @@
 import re
+from parser.transaction_classifier import TransactionClassifier
+from parser.merchant_extractor import MerchantExtractor
 
 
 class TransactionParser:
@@ -13,6 +15,9 @@ class TransactionParser:
         self.date_pattern = re.compile(
             r"^\d{2}[/-]\d{2}[/-]\d{2,4}"
         )
+        self.classifier = TransactionClassifier()
+        self.merchant_extractor = MerchantExtractor()
+        
 
     def extract_transaction_lines(self, text: str) -> list[str]:
         """
@@ -33,6 +38,40 @@ class TransactionParser:
 
         return transaction_lines
     
+    def detect_transaction_type(self, line: str) -> str:
+        """
+        Detect whether a transaction is debit or credit.
+
+        Returns
+        -------
+        str
+        "debit", "credit", or "generic"
+        """
+
+        upper = line.upper()
+
+        if any(keyword in upper for keyword in (
+        "UPI/DR",
+        "UPV/DR",
+        "ATM WDL",
+        "WDL",
+        "DEBIT",
+        "DR/"
+        )):
+            return "debit"
+
+        if any(keyword in upper for keyword in (
+        "UPI/CR",
+        "UPV/CR",
+        "CASH DEP",
+        "CDM",
+        "CREDIT",
+        "CR/"
+        )):
+            return "credit"
+
+        return "generic"
+
     def parse_line(self, line: str) -> dict:
         """
         Parse one transaction line into structured fields.
@@ -42,34 +81,44 @@ class TransactionParser:
 
         date = parts[0]
 
-        balance = float(parts[-1])
+        balance = self._parse_amount(parts[-1])
 
-        amount = float(parts[-2])
+        amount = self._parse_amount(parts[-2])
 
         description = " ".join(parts[1:-2])
+
+        category = self.classifier.classify(description)
+
+        merchant = self.merchant_extractor.extract(description)
 
         return {
             "date": date,
             "description": description,
             "amount": amount,
             "balance": balance,
+            "category": category,
+            "merchant": merchant,
         }
-    
+
     def parse_debit_line(self, line: str) -> dict:
         """
         Parse a debit transaction line.
         """
 
         parts = line.split()
+        description = " ".join(parts[1:-2])
+        category = self.classifier.classify(description)
+        merchant = self.merchant_extractor.extract(description)
 
         return {
             "date": parts[0],
             "description": " ".join(parts[1:-2]),
-            "debit": float(parts[-2]),
+            "debit": self._parse_amount(parts[-2]),
             "credit": None,
-            "balance": float(parts[-1]),
+            "balance": self._parse_amount(parts[-1]),
+            "category": category,
+            "merchant": merchant,
         }
-
 
     def parse_credit_line(self, line: str) -> dict:
         """
@@ -77,31 +126,71 @@ class TransactionParser:
         """
 
         parts = line.split()
+        description = " ".join(parts[1:-2])
+        category = self.classifier.classify(description)
+        merchant = self.merchant_extractor.extract(description)
 
         return {
             "date": parts[0],
             "description": " ".join(parts[1:-2]),
             "debit": None,
-            "credit": float(parts[-2]),
-            "balance": float(parts[-1]),
+            "credit": self._parse_amount(parts[-2]),
+            "balance": self._parse_amount(parts[-1]),
+            "category": category,
+            "merchant": merchant,
         }
-    def parse(self, line: str, transaction_type: str = "generic") -> dict:
+    
+    def detect_transaction_type(self, line: str) -> str:
         """
-        Smart transaction parser.
-
-        Parameters
-        ----------
-        line : str
-        Transaction line.
-
-        transaction_type : str
-        generic, debit or credit
-
-        Returns
-        -------
-        dict
-        Parsed transaction.
+        Detect whether a transaction is debit or credit.
         """
+
+        upper = line.upper()
+
+        debit_keywords = [
+        "/DR/",
+        "UPI/DR",
+        "ATM WDL",
+        "WDL",
+        "DEBIT",
+        "WITHDRAWAL",
+        "POS",
+        "PURCHASE",
+        "CHARGE",
+        ]
+
+        credit_keywords = [
+        "/CR/",
+        "UPI/CR",
+        "CREDIT",
+        "DEPOSIT",
+        "CASH DEP",
+        "CSH DEP",
+        "SALARY",
+        "INTEREST",
+        "REFUND",
+        ]
+
+        for keyword in debit_keywords:
+            if keyword in upper:
+                return "debit"
+
+        for keyword in credit_keywords:
+            if keyword in upper:
+                return "credit"
+
+        return "generic"
+
+    def parse(self, line: str, transaction_type: str | None = None) -> dict:
+        """
+        Parse one transaction.
+
+        If transaction_type is omitted,
+        detect it automatically.
+        """
+
+        if transaction_type is None:
+            transaction_type = self.detect_transaction_type(line)
 
         if transaction_type.lower() == "debit":
             return self.parse_debit_line(line)
@@ -109,5 +198,21 @@ class TransactionParser:
         if transaction_type.lower() == "credit":
             return self.parse_credit_line(line)
 
-        return self.parse_line(line)   
-    
+        return self.parse_line(line)
+
+    def _parse_amount(self, value: str) -> float:
+        """
+        Convert OCR amount text into float.
+
+        Examples
+        --------
+        18,400.00 -> 18400.00
+        (500.00)  -> -500.00
+        """
+
+        value = value.replace(",", "").strip()
+
+        if value.startswith("(") and value.endswith(")"):
+            value = "-" + value[1:-1]
+
+        return float(value)
