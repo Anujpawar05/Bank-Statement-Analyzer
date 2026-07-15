@@ -96,6 +96,8 @@ class TransactionParser:
             "description": description,
             "amount": amount,
             "balance": balance,
+            "credit": amount,
+            "debit": None,
             "category": category,
             "merchant": merchant,
         }
@@ -106,18 +108,24 @@ class TransactionParser:
         """
 
         parts = line.split()
+
+        amount = self._parse_amount(parts[-2])
+
         description = " ".join(parts[1:-2])
+
         category = self.classifier.classify(description)
+
         merchant = self.merchant_extractor.extract(description)
 
         return {
-            "date": parts[0],
-            "description": " ".join(parts[1:-2]),
-            "debit": self._parse_amount(parts[-2]),
-            "credit": None,
-            "balance": self._parse_amount(parts[-1]),
-            "category": category,
-            "merchant": merchant,
+        "date": parts[0],
+        "description": description,
+        "amount": amount,          # <-- Added
+        "debit": amount,
+        "credit": None,
+        "balance": self._parse_amount(parts[-1]),
+        "category": category,
+        "merchant": merchant,
         }
 
     def parse_credit_line(self, line: str) -> dict:
@@ -126,18 +134,24 @@ class TransactionParser:
         """
 
         parts = line.split()
+
+        amount = self._parse_amount(parts[-2])
+
         description = " ".join(parts[1:-2])
+
         category = self.classifier.classify(description)
+
         merchant = self.merchant_extractor.extract(description)
 
         return {
-            "date": parts[0],
-            "description": " ".join(parts[1:-2]),
-            "debit": None,
-            "credit": self._parse_amount(parts[-2]),
-            "balance": self._parse_amount(parts[-1]),
-            "category": category,
-            "merchant": merchant,
+        "date": parts[0],
+        "description": description,
+        "amount": amount,          # <-- Added
+        "debit": None,
+        "credit": amount,
+        "balance": self._parse_amount(parts[-1]),
+        "category": category,
+        "merchant": merchant,
         }
     
     def detect_transaction_type(self, line: str) -> str:
