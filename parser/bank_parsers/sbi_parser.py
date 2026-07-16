@@ -176,43 +176,64 @@ class SBIParser(BaseParser):
         """
         Extract monetary values from OCR text.
 
-        Handles:
+        Handles OCR issues like:
         - 1,250.00
         - 1250.00
-        - 5002. 10
         - 5,002. 10
+        - 5002. 10
+        - 5 002.10
         """
 
-        # OCR sometimes inserts spaces before decimals
-        text = re.sub(r"(\d)\.\s+(\d{2})", r"\1.\2", text)
+        # Remove commas
+        text = text.replace(",", "")
 
-        # OCR sometimes inserts spaces inside numbers
-        text = re.sub(r"(\d)\s+(\d{3}\.\d{2})", r"\1\2", text)
+    # Fix OCR space before decimal digits
+        text = re.sub(
+            r"(\d)\.\s+(\d{2})",
+            r"\1.\2",
+            text,
+        )
 
-        matches = self.AMOUNT_PATTERN.findall(text)
+    # Fix OCR spaces inside numbers
+        text = re.sub(
+            r"(\d)\s+(\d+\.\d{2})",
+            r"\1\2",
+            text,
+        )
 
-        values = []
+    # Collapse multiple spaces
+        text = re.sub(
+            r"\s+",
+            " ",
+            text,
+        )
 
-        for match in matches:
+        matches = re.findall(
+            r"\b\d{1,9}\.\d{2}\b",
+            text,
+        )
+
+        filtered = []
+
+        for value in matches:
 
             try:
-                values.append(float(match.replace(",", "")))
 
-            except ValueError:
-                continue
+                number = float(value)
 
-        return values
-       
+        # Ignore OCR-created fake amounts
+                if number > 100000:
+                    continue
 
-        for match in matches:
+                filtered.append(number)
 
-            try:
-                values.append(float(match.replace(",", "")))
             except ValueError:
                 pass
 
-        return values
+        return filtered
 
+        return [float(value) for value in matches]
+     
     def _is_header(self, line):
 
         for header in self.HEADER_KEYWORDS:
@@ -323,33 +344,64 @@ class SBIParser(BaseParser):
         # Typical SBI pattern:
         # debit balance
         # credit balance
-        if len(numbers) >= 2:
-
-            tx["balance"] = numbers[-1]
-
-            amount = numbers[-2]
-
-        else:
+        if len(numbers) == 1:
 
             amount = numbers[0]
 
-        if self._looks_like_credit(description):
+        elif len(numbers) >= 2:
+
+            tx["balance"] = numbers[-1]
+            amount = numbers[-2]
+
+        else:
+            return
+
+            amount = numbers[0]
+
+        desc = description.upper()
+
+        if self._looks_like_credit(desc):
 
             tx["credit"] = amount
 
-        elif self._looks_like_debit(description):
+        elif self._looks_like_debit(desc):
 
             tx["debit"] = amount
 
-        else:
-            # Fallback inference
-            desc = description.upper()
+        elif "UPV/CR" in desc or "UPI/CR" in desc:
 
-            if (
-                "CR" in desc
-                or "DEPOSIT" in desc
-                or "CDM" in desc
-            ):
-                tx["credit"] = amount
-            else:
-                tx["debit"] = amount
+            tx["credit"] = amount
+
+        elif "UPV/DR" in desc or "UPI/DR" in desc:
+
+            tx["debit"] = amount
+
+        elif "DEPOSIT" in desc or "CDM" in desc:
+
+            tx["credit"] = amount
+
+        elif "REFUND" in desc or "INTEREST" in desc:
+
+            tx["credit"] = amount
+
+        else:
+
+            tx["debit"] = amount
+
+            # Debug parser decisions
+        if tx["debit"] == 0 and tx["credit"] == 0:
+            print(
+                f"[UNCLASSIFIED] {tx['date']} | {tx['description']}"
+        )
+
+        if tx["balance"] == 0:
+            print(
+                f"[NO BALANCE] {tx['date']} | {tx['description']}"
+        )
+
+        if len(numbers) >= 3:
+            print(
+                f"[MULTIPLE AMOUNTS] {tx['date']} | {numbers} | {tx['description']}"
+            )
+
+        

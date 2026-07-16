@@ -1,6 +1,9 @@
 import re
 from parser.transaction_classifier import TransactionClassifier
 from parser.merchant_extractor import MerchantExtractor
+from parser.description_cleaner import DescriptionCleaner
+from parser.merchant_normalizer import MerchantNormalizer
+from parser.merchant_classifier import MerchantClassifier
 
 
 class TransactionParser:
@@ -17,7 +20,9 @@ class TransactionParser:
         )
         self.classifier = TransactionClassifier()
         self.merchant_extractor = MerchantExtractor()
-        
+        self.description_cleaner = DescriptionCleaner()
+        self.merchant_normalizer = MerchantNormalizer()
+        self.merchant_classifier = MerchantClassifier()
 
     def extract_transaction_lines(self, text: str) -> list[str]:
         """
@@ -38,39 +43,7 @@ class TransactionParser:
 
         return transaction_lines
     
-    def detect_transaction_type(self, line: str) -> str:
-        """
-        Detect whether a transaction is debit or credit.
-
-        Returns
-        -------
-        str
-        "debit", "credit", or "generic"
-        """
-
-        upper = line.upper()
-
-        if any(keyword in upper for keyword in (
-        "UPI/DR",
-        "UPV/DR",
-        "ATM WDL",
-        "WDL",
-        "DEBIT",
-        "DR/"
-        )):
-            return "debit"
-
-        if any(keyword in upper for keyword in (
-        "UPI/CR",
-        "UPV/CR",
-        "CASH DEP",
-        "CDM",
-        "CREDIT",
-        "CR/"
-        )):
-            return "credit"
-
-        return "generic"
+    
 
     def parse_line(self, line: str) -> dict:
         """
@@ -85,11 +58,14 @@ class TransactionParser:
 
         amount = self._parse_amount(parts[-2])
 
-        description = " ".join(parts[1:-2])
+        raw_description = " ".join(parts[1:-2])
+        description = self.description_cleaner.clean(raw_description)
 
         category = self.classifier.classify(description)
 
         merchant = self.merchant_extractor.extract(description)
+        merchant = self.merchant_normalizer.normalize(merchant)
+        merchant_type = self.merchant_classifier.classify(merchant)
 
         return {
             "date": date,
@@ -116,6 +92,8 @@ class TransactionParser:
         category = self.classifier.classify(description)
 
         merchant = self.merchant_extractor.extract(description)
+        merchant = self.merchant_normalizer.normalize(merchant)
+        merchant_type = self.merchant_classifier.classify(merchant)
 
         return {
         "date": parts[0],
@@ -142,6 +120,8 @@ class TransactionParser:
         category = self.classifier.classify(description)
 
         merchant = self.merchant_extractor.extract(description)
+        merchant = self.merchant_normalizer.normalize(merchant)
+        merchant_type = self.merchant_classifier.classify(merchant)
 
         return {
         "date": parts[0],
