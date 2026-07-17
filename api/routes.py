@@ -1,8 +1,6 @@
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, UploadFile, Depends
+from pathlib import Path
 from fastapi.responses import FileResponse
-import tempfile
-import os
-import shutil
 
 from api.dependencies import get_processing_service
 
@@ -19,29 +17,25 @@ def root():
 
 
 @router.post("/analyze")
-async def analyze(file: UploadFile = File(...)):
-    """
-    Upload a bank statement PDF and return the generated Excel workbook.
-    """
+async def analyze(
+    file: UploadFile = File(...),
+    service=Depends(get_processing_service),
+):
 
-    upload_dir = tempfile.mkdtemp()
+    pdf_path = service.save_upload(file)
 
-    pdf_path = os.path.join(upload_dir, file.filename)
-
-    with open(pdf_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    excel_path = os.path.join(upload_dir, "analysis.xlsx")
-
-    service = get_processing_service()
+    excel_path = (
+        service.upload_dir /
+        f"{Path(file.filename).stem}_analysis.xlsx"
+    )
 
     service.generate_excel(
-        pdf_path=pdf_path,
-        output_path=excel_path,
+        str(pdf_path),
+        str(excel_path)
     )
 
     return FileResponse(
-        path=excel_path,
-        filename="analysis.xlsx",
+        path=str(excel_path),
+        filename=excel_path.name,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )

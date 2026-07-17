@@ -4,7 +4,7 @@ from analyzer.confidence_engine import ConfidenceEngine
 from parser.bank_detector import BankDetector
 from parser.metadata_extractor import MetadataExtractor
 from parser.parser_factory import ParserFactory
-
+from parser.ocr_normalizer import OCRNormalizer
 from analyzer.analysis_engine import AnalysisEngine
 from analyzer.audit_engine import AuditEngine
 
@@ -47,6 +47,11 @@ class ProcessingPipeline:
         # Extract Text
         # ---------------------------------
         text = self.document_extractor.extract(document)
+
+        # ---------------------------------
+        # Normalize OCR
+        # ---------------------------------
+        text = OCRNormalizer.normalize(text)
 
         # ---------------------------------
         # Detect Bank

@@ -8,12 +8,3 @@ app = FastAPI(
 )
 
 app.include_router(router)
-
-
-@app.get("/")
-def root():
-    return {
-        "project": "Bank Statement Analyzer",
-        "status": "running",
-        "version": "1.0.0",
-    }
