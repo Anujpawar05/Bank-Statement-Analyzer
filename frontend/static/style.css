@@ -1,36 +1,569 @@
 body{
-    font-family:Arial;
-    background:#f5f5f5;
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f6f9;
 }
 
 .container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:40px 0;
+}
 
-    width:600px;
-
-    margin:auto;
-
-    margin-top:80px;
+.card{
 
     background:white;
 
-    padding:30px;
+    padding:40px;
 
-    border-radius:10px;
+    width:500px;
+
+    border-radius:15px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.12);
 
     text-align:center;
 
-    box-shadow:0 0 15px rgba(0,0,0,.15);
+}
+
+h1{
+
+    margin-bottom:10px;
+
+}
+
+p{
+
+    color:#666;
+
+}
+
+#dropArea{
+
+    display:block;
+
+    border:3px dashed #4285F4;
+
+    border-radius:12px;
+
+    padding:45px;
+
+    margin:30px 0;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+#dropArea:hover{
+
+    background:#f8fbff;
+
+}
+
+.icon{
+
+    font-size:48px;
+
+}
+
+.title{
+
+    margin-top:10px;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+}
+
+.filename{
+
+    margin-top:15px;
+
+    color:#777;
 
 }
 
 button{
 
-    margin-top:20px;
+    width:100%;
 
-    padding:10px 25px;
+    padding:15px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#4285F4;
+
+    color:white;
+
+    font-size:18px;
+
+    cursor:pointer;
+
+}
+
+button:disabled{
+
+    background:#bbb;
+
+    cursor:not-allowed;
+
+}
+
+#status{
+
+    margin-top:25px;
+
+    font-weight:bold;
+
+}
+.loader{
+    width:40px;
+    height:40px;
+
+    border:5px solid #ddd;
+
+    border-top:5px solid #4285F4;
+
+    border-radius:50%;
+
+    animation:spin 1s linear infinite;
+
+    margin:20px auto;
+}
+
+@keyframes spin{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+/* ==========================================
+   RESULTS DASHBOARD
+========================================== */
+
+#results{
+
+    max-width:900px;
+
+    margin:40px auto;
+
+    background:white;
+
+    padding:35px;
+
+    border-radius:18px;
+
+    box-shadow:0 15px 35px rgba(0,0,0,.10);
+
+    animation:fadeIn .5s ease;
+
+}
+
+#results h2{
+
+    text-align:center;
+
+    margin-top:0;
+
+    margin-bottom:35px;
+
+    color:#1f2937;
+
+    font-size:30px;
+
+}
+
+
+/* ==========================================
+   Metadata
+========================================== */
+
+.meta{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+    margin-bottom:35px;
+
+}
+
+.meta div{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+.meta span{
+
+    font-size:30px;
+
+}
+
+.meta small{
+
+    color:#777;
+
+    display:block;
+
+    margin-bottom:4px;
+
+}
+
+.meta h3{
+
+    margin:0;
+
+    font-size:20px;
+
+    color:#111827;
+
+}
+
+
+/* ==========================================
+   Summary Cards
+========================================== */
+
+.summary-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:20px;
+
+}
+
+.summary-card{
+
+    padding:25px;
+
+    border-radius:15px;
+
+    color:white;
+
+    transition:.3s;
+
+}
+
+.summary-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:0 12px 24px rgba(0,0,0,.15);
+
+}
+
+.summary-card h4{
+
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:500;
+
+}
+
+.summary-card p{
+
+    margin:15px 0 0;
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    color:white;
+
+}
+
+
+/* Card Colors */
+
+.income{
+
+    background:#10B981;
+
+}
+
+.expense{
+
+    background:#EF4444;
+
+}
+
+.cashflow{
+
+    background:#3B82F6;
+
+}
+
+.transactions{
+
+    background:#F59E0B;
+
+}
+
+
+/* ==========================================
+   Download Button
+========================================== */
+
+input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+input[type="password"]:focus {
+    border-color: #4285F4;
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+}
+
+.result-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 35px;
+    flex-wrap: wrap;
+}
+
+#downloadBtn{
+
+    display:inline-block;
+
+    width:auto;
+
+    min-width:200px;
+
+    padding:16px 24px;
+
+    border-radius:10px;
+
+    background:#1f2937;
+
+    color:white;
+
+    text-align:center;
+
+    text-decoration:none;
 
     font-size:16px;
 
+    font-weight:bold;
+
+    transition:.3s;
+
+}
+
+#downloadBtn:hover{
+
+    background:#111827;
+
+    transform:translateY(-2px);
+
+}
+
+#resetBtn{
+    display:inline-block;
+    width:auto;
+    min-width:200px;
+    padding:16px 24px;
+    border-radius:10px;
+    background:#f3f4f6;
+    color:#374151;
+    border:1px solid #d1d5db;
+    font-size:16px;
+    font-weight:bold;
     cursor:pointer;
+    transition:.3s;
+}
+
+#resetBtn:hover{
+    background:#e5e7eb;
+    transform:translateY(-2px);
+}
+
+/* ==========================================
+   Progress Box & Stepper
+========================================== */
+
+.progress-box {
+    margin-top: 25px;
+    padding: 20px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.progress-bar-fill {
+    width: 10%;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #10b981);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+}
+
+.progress-step-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+
+.progress-timer {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* ==========================================
+   Reconciliation Banner & Nature Strip
+========================================== */
+
+.reconciliation-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #ecfdf5;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    color: #065f46;
+    font-size: 15px;
+}
+
+.recon-icon {
+    font-size: 26px;
+}
+
+.reconciliation-banner strong {
+    display: inline-block;
+    margin-right: 6px;
+    color: #047857;
+}
+
+.nature-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.nature-pill {
+    padding: 16px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+.nature-online {
+    background: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
+}
+
+.nature-cash {
+    background: #f0fdf4;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.nature-card {
+    background: #fefce8;
+    color: #854d0e;
+    border-color: #fef08a;
+}
+
+.nature-pill strong {
+    font-size: 18px;
+}
+
+/* ==========================================
+   Animation
+========================================== */
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+
+/* ==========================================
+   Mobile Responsive
+========================================== */
+
+@media(max-width:640px){
+
+    .summary-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .nature-strip {
+        grid-template-columns: 1fr;
+    }
+
+    #results{
+
+        margin:20px;
+
+    }
 
 }

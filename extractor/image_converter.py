@@ -39,7 +39,7 @@ class ImageConverter:
 
         for page_number, page in enumerate(document, start=1):
 
-            pixmap = page.get_pixmap(dpi=300)
+            pixmap = page.get_pixmap(dpi=120)
 
             image_file = output_path / f"page_{page_number}.png"
 

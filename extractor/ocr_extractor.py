@@ -7,25 +7,38 @@ Extract text from images using PaddleOCR.
 import os
 from pathlib import Path
 
-# Disable oneDNN (MKLDNN) before importing PaddleOCR
+# Disable oneDNN (MKLDNN) and model source connectivity check before importing PaddleOCR
 os.environ["FLAGS_use_mkldnn"] = "0"
-
-from paddleocr import PaddleOCR
+os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
+os.environ["DISABLE_MODEL_SOURCE_CHECK"] = "True"
 
 
 class OCRExtractor:
     """
     Extract text from one or more images using PaddleOCR.
     """
+    _shared_ocr = None
 
-    def __init__(self):
-        # English only for Version 1
-        self.ocr = PaddleOCR(
-            lang="en",
-            use_doc_orientation_classify=False,
-            use_doc_unwarping=False,
-            use_textline_orientation=False,
-        )
+    @classmethod
+    def get_ocr_instance(cls):
+        if cls._shared_ocr is None:
+            from paddleocr import PaddleOCR
+            cls._shared_ocr = PaddleOCR(
+                lang="en",
+                ocr_version="PP-OCRv4",
+                use_doc_orientation_classify=False,
+                use_doc_unwarping=False,
+                use_textline_orientation=False,
+            )
+        return cls._shared_ocr
+
+    @property
+    def ocr(self):
+        return self.get_ocr_instance()
+
+    def warmup(self):
+        """Warm up OCR instance."""
+        _ = self.ocr
 
     def extract(self, image_paths) -> str:
         """

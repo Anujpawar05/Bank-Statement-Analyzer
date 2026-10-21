@@ -1,47 +1,63 @@
+import time
 from pathlib import Path
 import shutil
-
-from fastapi import UploadFile
-from exporter.workbook_generator import WorkbookGenerator
 from pipeline.processing_pipeline import ProcessingPipeline
+from exporter.workbook_generator import WorkbookGenerator
 
 
 class ProcessingService:
-    """
-    Service layer responsible for processing bank statements.
-    """
 
     def __init__(self):
         self.pipeline = ProcessingPipeline()
+        self.workbook_generator = WorkbookGenerator()
 
         self.upload_dir = Path("uploads")
         self.upload_dir.mkdir(exist_ok=True)
-        self.workbook_generator = WorkbookGenerator()
 
-    def save_upload(self, file: UploadFile) -> Path:
-        """
-        Save uploaded PDF to uploads folder.
-        """
+    def save_upload(self, file):
+        pdf_path = self.upload_dir / file.filename
 
-        destination = self.upload_dir / file.filename
-
-        with destination.open("wb") as buffer:
+        with open(pdf_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        return destination
+        return pdf_path
 
-    def process_pdf(self, pdf_path: str) -> dict:
-        """
-        Process a PDF statement.
-        """
+    def generate_excel(
+        self,
+        pdf_path,
+        excel_path,
+        password=None
+    ):
 
-        return self.pipeline.process(pdf_path)
-    def generate_excel(self, pdf_path: str, output_path: str):
+        total_start = time.time()
 
-        result = self.pipeline.process(pdf_path)
+        print("=" * 60)
+        print("Starting Processing")
+        print("=" * 60)
+
+        step = time.time()
+
+        result = self.pipeline.process(
+            pdf_path,
+            password=password
+        )
+
+        print(f"Pipeline completed in {time.time() - step:.2f} seconds")
+
+        step = time.time()
 
         workbook = self.workbook_generator.generate(result)
 
-        workbook.save(output_path)
+        print(f"Workbook generated in {time.time() - step:.2f} seconds")
 
-        return output_path
+        step = time.time()
+
+        workbook.save(excel_path)
+
+        print(f"Workbook saved in {time.time() - step:.2f} seconds")
+
+        print("=" * 60)
+        print(f"TOTAL TIME: {time.time() - total_start:.2f} seconds")
+        print("=" * 60)
+
+        return result

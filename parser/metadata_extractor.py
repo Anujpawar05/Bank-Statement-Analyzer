@@ -59,9 +59,24 @@ class MetadataExtractor:
             text,
             re.IGNORECASE,
         )
-
         if match:
             return match.group(1)
+
+        # Fallback for PyMuPDF vertical column layout
+        first_chunk = text[:3000]
+        candidates = re.findall(r"\b([0-9]{11})\b", first_chunk)
+        for cand in candidates:
+            # Exclude known CIF number or phone patterns
+            if not cand.startswith("9133") and not cand.startswith("500"):
+                return cand
+
+        match_any = re.search(
+            r"Account\s*No\.?\s*:?\s*([0-9]{9,20})",
+            text,
+            re.IGNORECASE,
+        )
+        if match_any:
+            return match_any.group(1)
 
         return ""
 

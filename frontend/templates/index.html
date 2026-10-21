@@ -1,48 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Bank Statement Analyzer</title>
 
-    <link
-        rel="stylesheet"
-        href="/static/style.css">
-
+    <link rel="stylesheet" href="/static/style.css?v=3">
 </head>
 
 <body>
 
-<div class="container">
+    <div class="container">
 
-<h1>Bank Statement Analyzer</h1>
+        <div class="card">
 
-<p>
-Upload your bank statement PDF and download the analyzed Excel workbook.
-</p>
+            <h1>Bank Statement Analyzer</h1>
 
-<form
-id="upload-form"
-enctype="multipart/form-data">
+            <p>
+                Upload your bank statement PDF to extract transactions, confirm debit & credit balance, and export to Excel.
+            </p>
 
-<input
-type="file"
-id="file"
-accept=".pdf"
-required>
+            <form id="uploadForm">
 
-<button type="submit">
+                <input type="file" id="pdfFile" accept=".pdf" hidden>
 
-Analyze Statement
+                <label id="dropArea" for="pdfFile">
 
-</button>
+                    <div class="icon">
+                        📄
+                    </div>
 
-</form>
+                    <div class="title">
+                        Click or Drag PDF Here
+                    </div>
 
-<div id="status"></div>
+                    <div class="filename" id="filename">
+                        No file selected
+                    </div>
 
-</div>
+                </label>
 
-<script src="/static/app.js"></script>
+                <div id="passwordContainer" class="password-group">
+                    <input type="password" id="pdfPassword" placeholder="PDF Password (leave blank if not protected)">
+                </div>
+
+                <button type="button" id="analyzeBtn" disabled>
+                    Analyze Statement
+                </button>
+
+            </form>
+
+            <div id="status"></div>
+
+            <div id="spinner" hidden>
+                <div class="progress-box">
+                    <div class="progress-bar-container">
+                        <div id="progressBar" class="progress-bar-fill"></div>
+                    </div>
+                    <div id="progressStep" class="progress-step-text">Initializing processing engine...</div>
+                    <div id="progressTimer" class="progress-timer">Elapsed: 0s</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="results" hidden>
+
+        <h2>Analysis Summary</h2>
+
+        <div class="meta">
+
+            <div>
+                <span>🏦</span>
+                <div>
+                    <small>Bank</small>
+                    <h3 id="bankName">-</h3>
+                </div>
+            </div>
+
+            <div>
+                <span>👤</span>
+                <div>
+                    <small>Account Holder</small>
+                    <h3 id="holderName">-</h3>
+                </div>
+            </div>
+
+            <div>
+                <span>📅</span>
+                <div>
+                    <small>Statement Period</small>
+                    <h3 id="statementPeriod">-</h3>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="summary-grid">
+
+            <div class="summary-card income">
+                <h4>Total Income (Credits)</h4>
+                <p id="income">₹ 0.00</p>
+            </div>
+
+            <div class="summary-card expense">
+                <h4>Total Expense (Debits)</h4>
+                <p id="expense">₹ 0.00</p>
+            </div>
+
+            <div class="summary-card cashflow">
+                <h4>Net Cash Flow</h4>
+                <p id="cashFlow">₹ 0.00</p>
+            </div>
+
+            <div class="summary-card transactions">
+                <h4>Transactions</h4>
+                <p id="transactionCount">0</p>
+            </div>
+
+        </div>
+
+        <div class="result-actions">
+            <a id="downloadBtn" href="#" download>
+                📥 Download Excel
+            </a>
+            <button type="button" id="resetBtn">
+                🔄 Analyze Another Statement
+            </button>
+        </div>
+
+    </div>
+
+    <script src="/static/app.js?v=3"></script>
 
 </body>
 

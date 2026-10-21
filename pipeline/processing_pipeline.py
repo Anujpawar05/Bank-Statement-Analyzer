@@ -7,8 +7,9 @@ from parser.parser_factory import ParserFactory
 from parser.ocr_normalizer import OCRNormalizer
 from analyzer.analysis_engine import AnalysisEngine
 from analyzer.audit_engine import AuditEngine
-
+import time
 from categorizer.transaction_categorizer import TransactionCategorizer
+from categorizer.nature_classifier import NatureClassifier
 from validator.transaction_validator import TransactionValidator
 from parser.repair_engine import RepairEngine
 
@@ -27,42 +28,51 @@ class ProcessingPipeline:
         self.audit_engine = AuditEngine()
         self.repair_engine = RepairEngine()
         self.categorizer = TransactionCategorizer()
+        self.nature_classifier = NatureClassifier()
 
-    def process(self, pdf_path):
-        """
-        Process a bank statement from start to finish.
-
-        Returns
-        -------
-        dict
-        """
+    def process(self, pdf_path, password=None):        
 
         # ---------------------------------
         # Load PDF
         # ---------------------------------
-        loader = PDFLoader(pdf_path)
-        document = loader.load()
+        start = time.time()
 
+        loader = PDFLoader(pdf_path)
+
+        document = loader.load(password=password)
+        print(f"PDF Load: {time.time() - start:.2f}s")
         # ---------------------------------
         # Extract Text
         # ---------------------------------
+        start = time.time()
         text = self.document_extractor.extract(document)
-
+        print(f"Text Extraction: {time.time()-start:.2f}s")
         # ---------------------------------
         # Normalize OCR
         # ---------------------------------
+        start = time.time()
+
         text = OCRNormalizer.normalize(text)
+
+        print(f"OCR Normalize: {time.time()-start:.2f}s")
 
         # ---------------------------------
         # Detect Bank
         # ---------------------------------
+        start = time.time()
+
         bank_name = self.bank_detector.detect(text)
+
+        print(f"Bank Detection: {time.time()-start:.2f}s")
 
         # ---------------------------------
         # Extract Metadata
         # ---------------------------------
+        start = time.time()
+
         metadata = self.metadata_extractor.extract(text)
 
+        print(f"Metadata: {time.time()-start:.2f}s")
         # ---------------------------------
         # Select Parser
         # ---------------------------------
@@ -81,15 +91,32 @@ class ProcessingPipeline:
             # ---------------------------------
             # Parse Transactions
             # ---------------------------------
+            start = time.time()
+
             transactions = parser.parse(text)
+
+            print(f"Parsing: {time.time()-start:.2f}s")
+
+            # ---------------------------------
+            # Repair Transactions (reconcile debit/credit)
+            # ---------------------------------
+            start = time.time()
+
+            repair_report = self.repair_engine.analyze(transactions)
+
+            print(f"Repair: {time.time()-start:.2f}s")
 
             # ---------------------------------
             # Validate Transactions
             # ---------------------------------
+            start = time.time()
+
             transactions = [
                 TransactionValidator.validate(t)
                 for t in transactions
             ]
+
+            print(f"Validation: {time.time()-start:.2f}s")
 
             print("\nVALIDATION REPORT")
             print("=" * 60)
@@ -112,101 +139,62 @@ class ProcessingPipeline:
             print(f"Valid Transactions   : {valid}")
             print(f"Invalid Transactions : {invalid}")
             print(f"Total Transactions   : {len(transactions)}")
+                
 
-            # ---------------------------------
-            # Repair Transactions
-            #---------------------------------
-
-            repair_report = self.repair_engine.analyze(transactions)
-
-            print("\nREPAIR REPORT")
-            print("=" * 60)
-
-            if not repair_report:
-                print("No repairs required.")
-            else:
-
-                repaired = 0
-
-                for item in repair_report:
-
-                    if item["repaired"]:
-                        repaired += 1
-
-                    print(
-                        f"[{item['index']}] "
-                        f"{item['date']} | "
-                        f"{item['repair_type']} | "
-                        f"Difference={item['difference']:.2f}"
-                   )
-
-                print()
-                print(f"Automatic Repairs : {repaired}")
-                print(f"Items Reviewed    : {len(repair_report)}")
 
             # ---------------------------------
             # Audit Transactions
             # ---------------------------------
+            start = time.time()
+
             audit_report = self.audit_engine.audit(transactions)
 
-            print("\nAUDIT REPORT")
-            print("=" * 60)
+            print(f"Audit: {time.time()-start:.2f}s")
 
-            print(f"Passed Checks : {audit_report['passed']}")
-            print(f"Failed Checks : {audit_report['failed']}")
-
-            if audit_report["issues"]:
-
-                print("\nDetected Issues\n")
-
-                for issue in audit_report["issues"]:
-                    print(
-                        f"[{issue['index']}] "
-                        f"{issue['date']} | "
-                        f"Expected={issue['expected_balance']:.2f} | "
-                        f"Actual={issue['actual_balance']:.2f} | "
-                        f"Difference={issue['difference']:.2f}"
-                    )
-
-            else:
-                print("No balance inconsistencies detected.")
         
 
         # ---------------------------------
         # Confidence Engine
         # ---------------------------------
+        start = time.time()
+
         confidence_report = self.confidence_engine.evaluate(
             transactions,
             audit_report
         )
 
-        print("\nCONFIDENCE REPORT")
-        print("=" * 60)
 
-        print(
-            f"Average Confidence : "
-            f"{confidence_report['average_confidence']}%"
-       )
-
-        low = [
-            t for t in confidence_report["transactions"]
-            if t["confidence"] < 80
-        ]
-
-        print(f"Low Confidence Transactions : {len(low)}")
+        print(f"Confidence: {time.time()-start:.2f}s")
 
         # ---------------------------------
-        # Categorize Transactions
+        # Detect Nature of Transactions
         # ---------------------------------
+        start = time.time()
+
         for transaction in transactions:
-            transaction["category"] = self.categorizer.categorize(
-                transaction.get("description", "")
-            )
+            desc = transaction.get("description", "")
+            transaction["nature"] = self.nature_classifier.classify(desc)
 
+        print(f"Transaction Nature: {time.time()-start:.2f}s")
         # ---------------------------------
         # Financial Analysis
         # ---------------------------------
+        start = time.time()
+
         analysis = self.analysis_engine.analyze(transactions)
+
+        print(f"Analysis: {time.time()-start:.2f}s")
+
+        # Ensure opening and closing balances in metadata
+        if transactions:
+            if not metadata.get("opening_balance"):
+                t0 = transactions[0]
+                t0_bal = float(t0.get("balance", 0.0) or 0.0)
+                t0_deb = float(t0.get("debit", 0.0) or 0.0)
+                t0_crd = float(t0.get("credit", 0.0) or 0.0)
+                metadata["opening_balance"] = round(t0_bal + t0_deb - t0_crd, 2)
+            if not metadata.get("closing_balance"):
+                metadata["closing_balance"] = float(transactions[-1].get("balance", 0.0) or 0.0)
 
         return {
             "text": text,
@@ -217,3 +205,5 @@ class ProcessingPipeline:
             "audit_report": audit_report,
             "confidence_report": confidence_report,
         }
+
+        

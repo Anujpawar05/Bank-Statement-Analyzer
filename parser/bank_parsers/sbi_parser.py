@@ -43,21 +43,36 @@ class SBIParser(BaseParser):
     CREDIT_KEYWORDS = [
         "UPV/CR",
         "UPI/CR",
-        "DEP",
+        "UP1/CR",
+        "OPI/CR",
+        "OP1/CR",
+        "UPIICR",
+        "UPICR",
+        "/CR/",
         "DEPOSIT",
         "CDM",
+        "CSH DEP",
+        "CASH DEP",
         "CASH DEPOSIT",
         "INTEREST",
         "REFUND",
         "SALARY",
+        "CR TFR",
+        "BY TRANSFER",
     ]
 
     DEBIT_KEYWORDS = [
         "UPV/DR",
         "UPI/DR",
+        "UP1/DR",
+        "OPI/DR",
+        "OP1/DR",
+        "UPIDR",
+        "/DR/",
         "ATM",
         "POS",
         "WDL",
+        "WDL TFR",
         "TRANSFER",
         "PAYTM",
         "GOOGLE PAY",
@@ -83,6 +98,9 @@ class SBIParser(BaseParser):
             tx = self._parse_transaction(block)
 
             if not tx:
+                continue
+
+            if tx.get("debit", 0.0) == 0 and tx.get("credit", 0.0) == 0 and tx.get("balance", 0.0) == 0:
                 continue
 
             transactions.append(tx)
@@ -360,33 +378,30 @@ class SBIParser(BaseParser):
 
         desc = description.upper()
 
-        if self._looks_like_credit(desc):
+        is_explicit_debit = any(k in desc for k in [
+            "UPI/DR", "UP1/DR", "UPV/DR", "OP1/DR", "OPI/DR", "UPIDR",
+            "/DR/", " DR ", "-DR", "WDL TFR", "ATM WDL", "WDL/TFR", "CDMCHARGEDR"
+        ])
+        is_explicit_credit = any(k in desc for k in [
+            "UPI/CR", "UP1/CR", "UPV/CR", "OP1/CR", "OPI/CR", "UPIICR", "UPICR",
+            "/CR/", " CR ", "-CR", "CR TFR", "DEP/CR", "CSH DEP", "CASH DEP", "CDM"
+        ])
 
-            tx["credit"] = amount
-
-        elif self._looks_like_debit(desc):
-
+        if is_explicit_debit and not is_explicit_credit:
             tx["debit"] = amount
-
-        elif "UPV/CR" in desc or "UPI/CR" in desc:
-
+            tx["credit"] = 0.0
+        elif is_explicit_credit and not is_explicit_debit:
             tx["credit"] = amount
-
-        elif "UPV/DR" in desc or "UPI/DR" in desc:
-
+            tx["debit"] = 0.0
+        elif self._looks_like_debit(desc) and not self._looks_like_credit(desc):
             tx["debit"] = amount
-
-        elif "DEPOSIT" in desc or "CDM" in desc:
-
+            tx["credit"] = 0.0
+        elif self._looks_like_credit(desc):
             tx["credit"] = amount
-
-        elif "REFUND" in desc or "INTEREST" in desc:
-
-            tx["credit"] = amount
-
+            tx["debit"] = 0.0
         else:
-
             tx["debit"] = amount
+            tx["credit"] = 0.0
 
             # Debug parser decisions
         if tx["debit"] == 0 and tx["credit"] == 0:

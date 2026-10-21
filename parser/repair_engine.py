@@ -13,7 +13,16 @@ class RepairEngine:
         if len(transactions) < 2:
             return repairs
 
-        previous_balance = transactions[0]["balance"]
+        # Infer first transaction's balance if missing
+        if transactions[0].get("balance", 0.0) == 0 and len(transactions) > 1:
+            t1 = transactions[1]
+            t1_bal = float(t1.get("balance", 0.0))
+            t1_deb = float(t1.get("debit", 0.0))
+            t1_crd = float(t1.get("credit", 0.0))
+            if t1_bal > 0:
+                transactions[0]["balance"] = round(t1_bal + t1_deb - t1_crd, 2)
+
+        previous_balance = float(transactions[0].get("balance", 0.0))
 
         for index in range(1, len(transactions)):
 
@@ -23,10 +32,32 @@ class RepairEngine:
             credit = float(t.get("credit", 0.0))
             balance = float(t.get("balance", 0.0))
 
-            expected = round(previous_balance - debit + credit, 2)
-
             repaired = False
             repair_type = None
+
+            # ---------------------------------------------------
+            # Rule 0 : Both debit and credit present (mutually exclusive)
+            # ---------------------------------------------------
+            if debit > 0 and credit > 0:
+                if balance > 0 and previous_balance > 0:
+                    if balance < previous_balance:
+                        t["debit"] = round(previous_balance - balance, 2)
+                        t["credit"] = 0.0
+                    else:
+                        t["credit"] = round(balance - previous_balance, 2)
+                        t["debit"] = 0.0
+                else:
+                    # Keep larger or default to debit
+                    if credit > debit:
+                        t["debit"] = 0.0
+                    else:
+                        t["credit"] = 0.0
+                repaired = True
+                repair_type = "both_amounts_resolved"
+                debit = float(t.get("debit", 0.0))
+                credit = float(t.get("credit", 0.0))
+
+            expected = round(previous_balance - debit + credit, 2)
 
             # ---------------------------------------------------
             # Rule 1 : Missing balance
@@ -40,32 +71,32 @@ class RepairEngine:
                 repair_type = "balance"
 
             # ---------------------------------------------------
-            # Rule 2 : Missing debit
+            # Rule 2 : Misclassified as credit (balance decreased)
             # ---------------------------------------------------
             elif debit == 0 and credit > 0 and balance < previous_balance:
 
-                inferred = round(previous_balance + credit - balance, 2)
+                drop = round(previous_balance - balance, 2)
+                t["debit"] = credit if abs(credit - drop) <= 0.05 else drop
+                t["credit"] = 0.0
+                debit = t["debit"]
+                credit = 0.0
 
-                if inferred > 0:
-
-                    t["debit"] = inferred
-
-                    repaired = True
-                    repair_type = "debit"
+                repaired = True
+                repair_type = "credit_reclassified_to_debit"
 
             # ---------------------------------------------------
-            # Rule 3 : Missing credit
+            # Rule 3 : Misclassified as debit (balance increased)
             # ---------------------------------------------------
             elif credit == 0 and debit > 0 and balance > previous_balance:
 
-                inferred = round(balance - previous_balance + debit, 2)
+                gain = round(balance - previous_balance, 2)
+                t["credit"] = debit if abs(debit - gain) <= 0.05 else gain
+                t["debit"] = 0.0
+                credit = t["credit"]
+                debit = 0.0
 
-                if inferred > 0:
-
-                    t["credit"] = inferred
-
-                    repaired = True
-                    repair_type = "credit"
+                repaired = True
+                repair_type = "debit_reclassified_to_credit"
 
             # ---------------------------------------------------
             # Rule 4 : Missing leading digit in balance

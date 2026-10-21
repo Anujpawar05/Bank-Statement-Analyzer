@@ -26,9 +26,10 @@ class DocumentExtractor:
 
         # Step 1: Embedded text
         text = self.text_extractor.extract(document)
+        print(f"Embedded text length: {len(text)}")
 
         if text.strip():
-            print("✓ Embedded text detected.")
+            print("[OK] Embedded text detected.")
 
             text = self.ocr_cleaner.clean(text)
 
