@@ -1,61 +1,69 @@
-# Python
-__pycache__/
-*.py[cod]
+# ==========================================
+# Bank Statements, Documents & Exports (Confidential / Sensitive)
+# ==========================================
+# Exclude all PDFs, Excels, CSVs anywhere in the repository
+*.pdf
+*.PDF
+*.xlsx
+*.XLSX
+*.xls
+*.XLS
+*.csv
+*.CSV
 
-# Virtual Environment
-venv/
+# Keep folders tracked via .gitkeep but ignore all user / statement data
+sample_data/*
+!sample_data/.gitkeep
 
-# Generated files
 uploads/*
-outputs/*
-logs/*
-
-# Keep the folders, ignore their contents
 !uploads/.gitkeep
+
+outputs/*
 !outputs/.gitkeep
-!logs/.gitkeep
-# Sample PDFs
-sample_data/*.pdf
 
-# Temporary test scripts
-test_*.py
-# Pytest
-.pytest_cache/
-
-# Python cache
-__pycache__/
-*.py[cod]
-# Temporary OCR files
 temp/*
 !temp/.gitkeep
 
-# Virtual environment
-venv/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# IDE
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Test cache
-.pytest_cache/
-
-# Build
-build/
-dist/
-
-# Generated outputs
-outputs/*
-!outputs/.gitkeep
-
 logs/*
 !logs/.gitkeep
 
-# Temporary OCR images
-temp/
+# Local directory and structure dumps
+structure.txt
+project_structure.txt
+*.log
+
+# ==========================================
+# Python & Virtual Environment
+# ==========================================
+__pycache__/
+*.py[cod]
+*.pyc
+venv/
+.venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets & Environment Variables
+.env
+.env.*
+*.key
+*.pem
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# OCR Models & Cache
+.paddleocr/
+.paddlex/
