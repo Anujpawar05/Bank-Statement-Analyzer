@@ -1,6 +1,9 @@
+import os
+import shutil
+import tempfile
 import time
 from pathlib import Path
-import shutil
+
 from pipeline.processing_pipeline import ProcessingPipeline
 from exporter.workbook_generator import WorkbookGenerator
 
@@ -11,8 +14,12 @@ class ProcessingService:
         self.pipeline = ProcessingPipeline()
         self.workbook_generator = WorkbookGenerator()
 
-        self.upload_dir = Path("uploads")
-        self.upload_dir.mkdir(exist_ok=True)
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            self.upload_dir = Path(tempfile.gettempdir()) / "uploads"
+        else:
+            self.upload_dir = Path("uploads")
+
+        self.upload_dir.mkdir(parents=True, exist_ok=True)
 
     def save_upload(self, file):
         pdf_path = self.upload_dir / file.filename

@@ -22,14 +22,20 @@ class OCRExtractor:
     @classmethod
     def get_ocr_instance(cls):
         if cls._shared_ocr is None:
-            from paddleocr import PaddleOCR
-            cls._shared_ocr = PaddleOCR(
-                lang="en",
-                ocr_version="PP-OCRv4",
-                use_doc_orientation_classify=False,
-                use_doc_unwarping=False,
-                use_textline_orientation=False,
-            )
+            try:
+                from paddleocr import PaddleOCR
+                cls._shared_ocr = PaddleOCR(
+                    lang="en",
+                    ocr_version="PP-OCRv4",
+                    use_doc_orientation_classify=False,
+                    use_doc_unwarping=False,
+                    use_textline_orientation=False,
+                )
+            except ImportError as e:
+                raise RuntimeError(
+                    "OCR is disabled in this serverless deployment because PaddleOCR requires full container resources. "
+                    "Please upload a standard digital bank statement (with selectable text) or deploy with Docker/Render for scanned image statements."
+                ) from e
         return cls._shared_ocr
 
     @property

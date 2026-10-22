@@ -94,6 +94,40 @@ When prompted, provide the path to your bank statement PDF.
 
 ---
 
+## ☁️ Deployment
+
+### 1. Deploying to Vercel (Recommended for Digital Statements)
+
+This project is pre-configured with `vercel.json`, `api/index.py`, and `pyproject.toml` for seamless Vercel deployment:
+
+1. **Push your code to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Configure Vercel deployment"
+   git push origin main
+   ```
+2. **Import into Vercel**:
+   - Go to [vercel.com/new](https://vercel.com/new).
+   - Select your repository (`Bank-Statement-Analyzer`).
+   - Leave Framework Preset as **Other** (Vercel automatically detects FastAPI from `pyproject.toml` and `api/index.py`).
+   - Click **Deploy**.
+3. **Enjoy your live web application**:
+   - Vercel routes `/` to the interactive statement analyzer dashboard at `/app`.
+   - Excel reports are generated and downloadable directly through the browser.
+
+> [!NOTE]
+> Vercel Serverless Functions have a 250 MB bundle limit and execution timeouts suitable for standard digital PDF statements (HDFC, SBI, ICICI, Axis, Kotak, etc.). If you require heavy OCR on scanned photocopied statements, deploy using the included `Dockerfile` on Render, Railway, or Fly.io.
+
+### 2. Full OCR Container Deployment (Docker / Render / Railway)
+
+For full PaddleOCR support on scanned/photocopied statements:
+```bash
+docker build -t bank-statement-analyzer .
+docker run -p 8000:8000 bank-statement-analyzer
+```
+
+---
+
 ## 🔒 Privacy & Security
 
 - Statement files, customer data, and generated spreadsheets are strictly excluded from version control via `.gitignore`.

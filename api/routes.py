@@ -66,6 +66,13 @@ async def analyze(
 
         raise
 
+    except RuntimeError as e:
+
+        return {
+            "error": True,
+            "message": str(e)
+        }
+
     filename = Path(excel_path).name
     transactions = result.get("transactions", [])
 

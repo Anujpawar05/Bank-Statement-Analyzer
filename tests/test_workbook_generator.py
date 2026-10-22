@@ -30,18 +30,18 @@ def test_generate_workbook():
 
     assert workbook.active.title == "Transactions"
     assert workbook.active["A2"].value == "01/04/2026"
-    assert workbook.active["D2"].value == 50000
+    assert workbook.active["H2"].value == 50000
 
     summary = workbook["Summary"]
 
-    assert summary["A13"].value == "Total Income"
-    assert summary["B13"].value == 50000
+    assert summary["A9"].value == "Total Credits (+)"
+    assert summary["B9"].value == 50000
 
-    assert summary["A14"].value == "Total Expense"
-    assert summary["B14"].value == 0
+    assert summary["A10"].value == "Total Debits (-)"
+    assert summary["B10"].value == 0
 
-    assert summary["A15"].value == "Net Cash Flow"
-    assert summary["B15"].value == 50000
+    assert summary["A16"].value == "Net Cash Flow"
+    assert summary["B16"].value == 50000
 
-    assert summary["A17"].value == "Transactions"
+    assert summary["A17"].value == "Total Transactions Analyzed"
     assert summary["B17"].value == 1

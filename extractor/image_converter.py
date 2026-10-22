@@ -4,6 +4,8 @@ image_converter.py
 Converts PDF pages into PNG images.
 """
 
+import os
+import tempfile
 from pathlib import Path
 
 import fitz
@@ -32,7 +34,11 @@ class ImageConverter:
             List of generated image paths.
         """
 
-        output_path = Path(output_dir)
+        if output_dir == "temp" and (os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")):
+            output_path = Path(tempfile.gettempdir()) / "temp"
+        else:
+            output_path = Path(output_dir)
+
         output_path.mkdir(parents=True, exist_ok=True)
 
         image_paths = []

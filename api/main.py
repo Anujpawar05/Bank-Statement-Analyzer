@@ -14,9 +14,12 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
     except Exception:
         pass
 
+import os
+from pathlib import Path
 from api.routes import router
 from frontend.routes import frontend_router
-from extractor.ocr_extractor import OCRExtractor
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 app = FastAPI(
     title="Bank Statement Analyzer API",
@@ -27,14 +30,18 @@ app = FastAPI(
 
 @app.on_event("startup")
 def startup_event():
-    # Pre-load OCR engine asynchronously in background
+    # Only attempt background warm-up in persistent server environments if OCR is desired
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return
+
     def _warmup():
         try:
+            from extractor.ocr_extractor import OCRExtractor
             print("[Startup] Pre-loading PaddleOCR engine in background...")
             OCRExtractor.get_ocr_instance()
             print("[Startup] PaddleOCR engine ready!")
         except Exception as e:
-            print(f"[Startup] OCR warmup error: {e}")
+            print(f"[Startup] OCR warmup info: {e}")
 
     threading.Thread(target=_warmup, daemon=True).start()
 
@@ -44,6 +51,6 @@ app.include_router(frontend_router)
 
 app.mount(
     "/static",
-    StaticFiles(directory="frontend/static"),
+    StaticFiles(directory=str(BASE_DIR / "frontend" / "static")),
     name="static",
 )

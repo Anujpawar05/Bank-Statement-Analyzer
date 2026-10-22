@@ -1,0 +1,16 @@
+.git
+.github
+.pytest_cache
+venv/
+tests/
+sample_data/
+outputs/
+temp/
+uploads/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.DS_Store
+Thumbs.db

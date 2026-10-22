@@ -159,6 +159,13 @@ button.addEventListener("click", async (e) => {
             return;
         }
 
+        if (data.error) {
+            spinner.hidden = true;
+            status.innerHTML = `<span style="color:#dc2626;">⚠️ ${data.message}</span>`;
+            button.disabled = false;
+            return;
+        }
+
         spinner.hidden = true;
         status.innerHTML = "Analysis Complete ✔";
 
