@@ -5,6 +5,7 @@ from api.templates import templates
 frontend_router = APIRouter()
 
 
+@frontend_router.get("/")
 @frontend_router.get("/app")
 def app_page(request: Request):
     return templates.TemplateResponse(

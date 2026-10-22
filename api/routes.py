@@ -8,9 +8,6 @@ from fastapi import Form
 router = APIRouter()
 
 
-@router.get("/")
-def root():
-    return RedirectResponse(url="/app")
 
 
 @router.get("/status")
